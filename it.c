@@ -61,6 +61,13 @@ struct ip {
   struct	in_addr ip_src,ip_dst;
 };
 
+/*
+ * Tunnel header
+ */
+struct tunnel {
+  unsigned int tnl_id; /*the packet number*/
+};
+
 unsigned short in_cksum(unsigned short *, int);
 
 /* int sock - ICMP socket used to communicate
@@ -72,14 +79,16 @@ unsigned short in_cksum(unsigned short *, int);
 */
 int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int packetsize, u_int16_t id) {
   int len, result, fromlen, num;
+  unsigned int current_tnl_id = 0;
   char* packet;
   fd_set fs;
   unsigned char didSend, didReceive;
   struct icmp *icmp, *icmpr;
+  struct tunnel *tnl, *tnlr;
   struct timeval tv;
   struct sockaddr_in from;
 
-  len = sizeof (struct icmp);
+  len = sizeof (struct icmp) + sizeof(struct tunnel); /*how far from the beginning of the packet is the data?*/
 
   if ((packet = malloc (len+packetsize)) == NULL) {
     fprintf(stderr, "Error allocating packet buffer");
@@ -89,6 +98,9 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
 
   icmp = (struct icmp*)(packet);
   icmpr = (struct icmp*)(packet+sizeof(struct ip));
+
+  tnl = (struct icmp*)(packet+sizeof(struct icmp));
+  tnlr = (struct icmp*)(packet+sizeof(struct icmp)+sizeof(struct ip));
 
   /* here's the infinite loop that shovels packets back and forth while the tunnel's up */
   while (1) {
@@ -118,6 +130,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       icmp->seq = 0;
       icmp->cksum = 0;
       icmp->cksum = in_cksum((unsigned short*)packet, len+result);
+      tnl->tnl_id = current_tnl_id++;
       result = sendto(sock, (char*)packet, len+result, 0, (struct sockaddr*)target, sizeof (struct sockaddr_in));
       if (result==-1) {
         perror ("sendto");
@@ -134,7 +147,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       /* make the destination be the source of the most recently received packet (this can be dangerous) */
       memcpy(&(target->sin_addr.s_addr), &(from.sin_addr.s_addr), 4*sizeof(char));
       if (icmpr->id == id) {/*this filters out all of the other ICMP packets I don't care about*/
-        tun_write(tun_fd, packet+sizeof(struct ip)+sizeof(struct icmp), num-sizeof(struct ip)-sizeof(struct icmp));
+        tun_write(tun_fd, packet+sizeof(struct ip)+sizeof(struct icmp)+sizeof(struct tunnel), num-sizeof(struct ip)-sizeof(struct icmp)-sizeof(struct tunnel));
         didReceive = 1;
       } else if (icmpr->type == 8) {/* some normal ping request */
         icmpr->type = 0;/*echo response*/

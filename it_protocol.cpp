@@ -31,9 +31,9 @@ class resend_packet_compare
   public:
     bool operator() (const resend_packet& lhs, const resend_packet& rhs) const {
       if( lhs.ts.tv_sec == rhs.ts.tv_sec ){
-        return lhs.ts.tv_nsec > rhs.ts.tv_nsec;
+        return lhs.ts.tv_nsec < rhs.ts.tv_nsec;
       }else{
-        return lhs.ts.tv_sec > rhs.ts.tv_sec;
+        return lhs.ts.tv_sec < rhs.ts.tv_sec;
       }
     }
 };

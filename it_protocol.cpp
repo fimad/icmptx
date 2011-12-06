@@ -208,7 +208,7 @@ void handle_init_1 (void *packet, unsigned int length ){
       NULL /*no args to callback*/);
 
   //generate a nonce
-  if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 0){
+  if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
     perror("INIT 1: Unable to generate a nonce");
     DH_free(current_dh);
     return;
@@ -282,7 +282,7 @@ void handle_init_2 (void *packet, unsigned int length ){
   }
 
   //generate a nonce
-  if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 0){
+  if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
     perror("INIT 2: Unable to generate a nonce");
     DH_free(current_dh);
     return;

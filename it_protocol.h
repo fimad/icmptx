@@ -1,10 +1,10 @@
 //tnl_type values
-#define TNL_INIT_1  0x01
-#define TNL_INIT_2  0x02
-#define TNL_INIT_3  0x03
-#define TNL_INIT_4  0x04
-#define TNL_TRANS   0x05
-#define TNL_RECV    0x06
+#define TNL_INIT_1  0x00
+#define TNL_INIT_2  0x01
+#define TNL_INIT_3  0x02
+#define TNL_INIT_4  0x03
+#define TNL_TRANS   0x04
+#define TNL_RECV    0x05
 #define TNL_IDLE    -1
 #define TNL_READY   -2
 

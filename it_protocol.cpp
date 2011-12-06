@@ -74,19 +74,21 @@ void init( bool isProxy, char *password ){
   srand ( time(NULL) );
 
   //if we are the client send an INIT_1 to the server and hope we get authenticated
-  struct tunnel header;
-  header.tnl_id = 0;
-  header.tnl_session = 0;
-  header.tnl_type = TNL_INIT_1;
+  if( !isProxy) {
+    struct tunnel header;
+    header.tnl_id = 0;
+    header.tnl_session = 0;
+    header.tnl_type = TNL_INIT_1;
 
-  raw_send_packet(&header, sizeof(struct tunnel));
+    raw_send_packet(&header, sizeof(struct tunnel));
+  }
 }
 
 //received a packet over icmp
 void handle_packet( void *data, unsigned int length  ){
   struct tunnel *header = (struct tunnel*)data;
-  if( header->tnl_type >=1 && header->tnl_type <= 6 ){
-    packet_handlers[header->tnl_type-1](data,length);
+  if( header->tnl_type >=0 && header->tnl_type <= 5 ){
+    packet_handlers[header->tnl_type](data,length);
   }
 }
 

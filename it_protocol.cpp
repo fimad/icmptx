@@ -185,6 +185,8 @@ void handle_init_1 (void *packet, unsigned int length ){
   if( !is_proxy )
     return;
 
+  printf("Got an INIT_1\n");
+
   //create a diffie-hellman context
   current_dh = DH_generate_parameters(
       1024 /*prime length*/,
@@ -240,6 +242,9 @@ void handle_init_1 (void *packet, unsigned int length ){
 void handle_init_2 (void *packet, unsigned int length ){
   if( is_proxy && state == TNL_IDLE)
     return;
+  
+  printf("Got an INIT_2\n");
+
   int data_len = length - sizeof(struct tunnel);
   int diffie_len;
   int recv_nonce_len;
@@ -312,6 +317,8 @@ void handle_init_2 (void *packet, unsigned int length ){
 void handle_init_3 (void *packet, unsigned int length ){
   if( !is_proxy || current_dh == NULL )
     return;
+
+  printf("Got an INIT_3\n");
 
   //decrypt the packet
   int data_len = length - sizeof(struct tunnel);
@@ -392,11 +399,15 @@ void handle_init_3 (void *packet, unsigned int length ){
   free(packet_data);
   free(pub_key_str);
   free(recv_data);
+
+  printf("Server successfully established session\n");
 }
 
 void handle_init_4 (void *packet, unsigned int length ){
   if( is_proxy && state == TNL_IDLE)
     return;
+
+  printf("Got INIT_4\n");
 
   struct tunnel *header = (struct tunnel*)packet;
   //decrypt the packet
@@ -445,11 +456,15 @@ void handle_init_4 (void *packet, unsigned int length ){
   session_id = header->tnl_session;
 
   free(recv_data);
+
+  printf("Client successfully established session\n");
 }
 
 void handle_trans (void *packet, unsigned int length ){
   if( state != TNL_READY )
     return;
+
+  printf("Got a TRANS\n");
 
   struct tunnel *header = (struct tunnel*)packet;
   if( header->tnl_session != session_id ) //only care about packets from the current session
@@ -478,6 +493,9 @@ void handle_trans (void *packet, unsigned int length ){
 }
 
 void handle_recv (void *packet, unsigned int length ){
+
+  printf("Got a RECV\n");
+
   struct tunnel *header = (struct tunnel *)packet;
 
   if( state != TNL_READY || header->tnl_session != session_id )

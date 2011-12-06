@@ -85,8 +85,8 @@ void init( bool isProxy, char *password ){
 //received a packet over icmp
 void handle_packet( void *data, unsigned int length  ){
   struct tunnel *header = (struct tunnel*)data;
-  if( header->tnl_type >=0 && header->tnl_type <= 5 ){
-    packet_handlers[header->tnl_type](data,length);
+  if( header->tnl_type >=1 && header->tnl_type <= 6 ){
+    packet_handlers[header->tnl_type-1](data,length);
   }
 }
 

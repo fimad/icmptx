@@ -38,7 +38,7 @@
 #include <sys/socket.h>
 #include <linux/if.h>
 
-int snprintf(char *str, size_t size, const char *format, ...);
+//int snprintf(char *str, size_t size, const char *format, ...);
 
 /* 
  * Allocate TUN device, returns opened fd. 

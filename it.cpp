@@ -33,6 +33,7 @@
 #include <netdb.h>
 
 #include "tun_dev.h"
+#include "it_protocol.h"
 
 /*
  * standard ICMP header
@@ -61,13 +62,6 @@ struct ip {
   struct	in_addr ip_src,ip_dst;
 };
 
-/*
- * Tunnel header
- */
-struct tunnel {
-  unsigned int tnl_id; /*the packet number*/
-};
-
 unsigned short in_cksum(unsigned short *, int);
 
 /* int sock - ICMP socket used to communicate
@@ -79,18 +73,16 @@ unsigned short in_cksum(unsigned short *, int);
 */
 int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int packetsize, u_int16_t id) {
   int len, result, fromlen, num;
-  unsigned int current_tnl_id = 0;
   char* packet;
   fd_set fs;
   unsigned char didSend, didReceive;
   struct icmp *icmp, *icmpr;
-  struct tunnel *tnl, *tnlr;
   struct timeval tv;
   struct sockaddr_in from;
 
-  len = sizeof (struct icmp) + sizeof(struct tunnel); /*how far from the beginning of the packet is the data?*/
+  len = sizeof (struct icmp); /*how far from the beginning of the packet is the data?*/
 
-  if ((packet = malloc (len+packetsize)) == NULL) {
+  if ((packet = (char*)malloc (len+packetsize)) == NULL) {
     fprintf(stderr, "Error allocating packet buffer");
     exit(1);
   }
@@ -98,9 +90,6 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
 
   icmp = (struct icmp*)(packet);
   icmpr = (struct icmp*)(packet+sizeof(struct ip));
-
-  tnl = (struct icmp*)(packet+sizeof(struct icmp));
-  tnlr = (struct icmp*)(packet+sizeof(struct icmp)+sizeof(struct ip));
 
   /* here's the infinite loop that shovels packets back and forth while the tunnel's up */
   while (1) {
@@ -124,19 +113,22 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
         perror("read");
         return -1;
       }
-      icmp->type = proxy ? 0 : 8;/*echo response or echo request*/
+      /*
+      icmp->type = proxy ? 0 : 8;//echo response or echo request
       icmp->code = 0;
-      icmp->id = id;/* mark the packet so the other end knows it's a tunnel packet */
+      icmp->id = id;//mark the packet so the other end knows it's a tunnel packet 
       icmp->seq = 0;
       icmp->cksum = 0;
       icmp->cksum = in_cksum((unsigned short*)packet, len+result);
-      tnl->tnl_id = current_tnl_id++;
       result = sendto(sock, (char*)packet, len+result, 0, (struct sockaddr*)target, sizeof (struct sockaddr_in));
       if (result==-1) {
         perror ("sendto");
         return -1;
       }
+      */
       didSend = 1;
+      send_packet(packet+len,result);
+
     }
 
     /* data available on socket from icmp, need to pass along to tunnel device */
@@ -147,7 +139,10 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       /* make the destination be the source of the most recently received packet (this can be dangerous) */
       memcpy(&(target->sin_addr.s_addr), &(from.sin_addr.s_addr), 4*sizeof(char));
       if (icmpr->id == id) {/*this filters out all of the other ICMP packets I don't care about*/
-        tun_write(tun_fd, packet+sizeof(struct ip)+sizeof(struct icmp)+sizeof(struct tunnel), num-sizeof(struct ip)-sizeof(struct icmp)-sizeof(struct tunnel));
+        /*
+        tun_write(tun_fd, packet+sizeof(struct ip)+sizeof(struct icmp), num-sizeof(struct ip)-sizeof(struct icmp));
+        */
+        handle_packet( packet+sizeof(struct ip)+sizeof(struct icmp), num-sizeof(struct ip)-sizeof(struct icmp) );
         didReceive = 1;
       } else if (icmpr->type == 8) {/* some normal ping request */
         icmpr->type = 0;/*echo response*/
@@ -159,6 +154,40 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
         result = sendto(sock, (char*)packet+sizeof(struct ip), len+num-sizeof(struct ip)-sizeof(struct icmp), 0, (struct sockaddr*)target, sizeof (struct sockaddr_in));
       }
     }    /* end of data available */
+
+    //resend any packets that have not been confirmed recieved and has passed their timeout
+    while( should_resend_packet() ){
+      void *data;
+      unsigned int length;
+      next_resend_packet(&data,&length);
+
+      if( length > packetsize-sizeof(struct icmp) ){
+        perror("attempting to send a message that is TOO BIG");
+        return -1;
+      }
+      memcpy(packet+sizeof(struct icmp),data,length); //copy the data into the packet
+
+      icmp->type = proxy ? 0 : 8;//echo response or echo request
+      icmp->code = 0;
+      icmp->id = id;//mark the packet so the other end knows it's a tunnel packet 
+      icmp->seq = 0;
+      icmp->cksum = 0;
+      icmp->cksum = in_cksum((unsigned short*)packet, len+result);
+      result = sendto(sock, (char*)packet, length+sizeof(struct icmp), 0, (struct sockaddr*)target, sizeof (struct sockaddr_in));
+      if (result==-1) {
+        perror ("sendto");
+        return -1;
+      }
+    }
+
+    //shuffle decrypted packets from icmp to the tunnel interface
+    while( did_recieve_packet() ){ 
+      void *data;
+      unsigned int length;
+      recieve_packet(&data, &length);
+      tun_write(tun_fd, (char*)data, length);
+      free(data);
+    }
 
     /*
      * if we didn't send or receive anything, the select timed out
@@ -191,7 +220,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
  * serverNameOrIP - the server's host name or IP address
  * tun_fd - the file descriptor of the socket we read and write from
  */
-int run_icmp_tunnel (int id, int packetsize, int isServer, char *serverNameOrIP, int tun_fd) {
+int run_icmp_tunnel (int id, int packetsize, int isServer, char *serverNameOrIP, char *password, int tun_fd) {
   struct sockaddr_in target;
   struct in_addr inp;
   int s;
@@ -213,6 +242,7 @@ int run_icmp_tunnel (int id, int packetsize, int isServer, char *serverNameOrIP,
     return -1;
   }
 
+  init( isServer, password );
   icmp_tunnel(s, isServer, &target, tun_fd, packetsize, (u_int16_t) id);
 
   close(s);

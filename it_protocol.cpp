@@ -24,16 +24,17 @@ typedef struct {
   unsigned int length;
   unsigned int id;
   void *data;
-  bool should_resend; //should it be put back in queue to resend? if no it's prolly part of authentication
+  int should_resend; //should it be put back in queue to resend? if no it's prolly part of authentication
+  //0 is yes, 1 is no, 2 is no and I already sent it
 } resend_packet;
 class resend_packet_compare
 {
   public:
     bool operator() (const resend_packet& lhs, const resend_packet& rhs) const {
       if( lhs.ts.tv_sec == rhs.ts.tv_sec ){
-        return lhs.ts.tv_nsec < rhs.ts.tv_nsec;
+        return lhs.ts.tv_nsec > rhs.ts.tv_nsec;
       }else{
-        return lhs.ts.tv_sec < rhs.ts.tv_sec;
+        return lhs.ts.tv_sec > rhs.ts.tv_sec;
       }
     }
 };
@@ -96,7 +97,7 @@ void send_packet( void *data , unsigned int length ){
     packet.length = length;
     packet.id = next_send_message;
     next_send_message++;
-    packet.should_resend = true;
+    packet.should_resend = 0;
 
     //encrypt the payload
     unsigned char *enc_data = aes_encrypt( &ephemeral_aes, (unsigned char*)data, (int*)&length );
@@ -124,7 +125,7 @@ void raw_send_packet( void *data, unsigned int length ){
     packet.length = length;
     packet.id = 0;
     packet.data = malloc( length );
-    packet.should_resend = false;
+    packet.should_resend = 1;
     memcpy( packet.data, data, length );
     clock_gettime(CLOCK_REALTIME, &packet.ts); //we want to send it now
     packets_to_resend.push(packet);
@@ -134,12 +135,19 @@ bool should_resend_packet( ){
   resend_packet tmp;
   clock_gettime(CLOCK_REALTIME, &tmp.ts);
   resend_packet_compare compare;
-  while( !packets_to_resend.empty() ){ //pop confirmed packets from the queue
+  bool should_stop = false;
+  while( !packets_to_resend.empty() && !should_stop ){ //pop confirmed packets from the queue
     resend_packet p = packets_to_resend.top();
-    if( confirmed_sent.count( p.id ) > 0 || !p.should_resend){
+    if( confirmed_sent.count( p.id ) > 0 || p.should_resend == 2 ){
+      printf("I AM DELETING RESEND_PACKETS SUPPOSEDLY\n");
       packets_to_resend.pop();
-      confirmed_sent.erase(p.id);
+      struct tunnel *header = (struct tunnel*)p.data;
+      if( header->tnl_type == TNL_TRANS){
+        confirmed_sent.erase(p.id);
+      }
       free(p.data); //free packet's data
+    }else{
+      should_stop = true;
     }
   }
   return( !packets_to_resend.empty() && compare(tmp,packets_to_resend.top()));
@@ -150,6 +158,9 @@ void next_resend_packet( void **data , unsigned int *length ){
     resend_packet packet = packets_to_resend.top();
     packets_to_resend.pop();
     packet.ts.tv_sec += 1;
+    if( packet.should_resend == 1 ){
+      packet.should_resend = 2;
+    }
     packets_to_resend.push(packet); //push the packet back into the queue after increasing the next send time
     *data = packet.data;
     *length  = packet.length;

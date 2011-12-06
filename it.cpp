@@ -80,6 +80,8 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
   struct timeval tv;
   struct sockaddr_in from;
 
+  printf("Starting tunnel...\n");
+
   len = sizeof (struct icmp); /*how far from the beginning of the packet is the data?*/
 
   if ((packet = (char*)malloc (len+packetsize)) == NULL) {
@@ -175,7 +177,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       icmp->id = id;//mark the packet so the other end knows it's a tunnel packet 
       icmp->seq = 0;
       icmp->cksum = 0;
-      icmp->cksum = in_cksum((unsigned short*)packet, len+result);
+      icmp->cksum = in_cksum((unsigned short*)packet, length+sizeof(struct icmp));
       result = sendto(sock, (char*)packet, length+sizeof(struct icmp), 0, (struct sockaddr*)target, sizeof (struct sockaddr_in));
       if (result==-1) {
         perror ("sendto");

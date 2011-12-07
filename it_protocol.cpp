@@ -210,8 +210,8 @@ void handle_init_1 (void *packet, unsigned int length ){
 
   //create a diffie-hellman context
   current_dh = DH_generate_parameters(
-      1024 /*prime length*/,
-      2 /*a parameter that must be 2 or 5*/,
+      64 /*prime length*/,
+      DH_GENERATOR_5 /*a parameter that must be 2 or 5*/,
       NULL /*no callback*/,
       NULL /*no args to callback*/);
   if( current_dh == NULL ){
@@ -242,7 +242,7 @@ void handle_init_1 (void *packet, unsigned int length ){
   char *diffie_p = BN_bn2hex(current_dh->p);
   int diffie_p_len = strlen(diffie_p);
   char *diffie_g = BN_bn2hex(current_dh->g);
-  int diffie_g_len = strlen(diffie_p);
+  int diffie_g_len = strlen(diffie_g);
 
   printf("my p is: %s\n", diffie_p);
   printf("my g is: %s\n", diffie_g);

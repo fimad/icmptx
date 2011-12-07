@@ -325,8 +325,10 @@ void handle_init_2 (void *packet, unsigned int length ){
   //copy p and g
   int tmp_len = (diffie_p_len>diffie_g_len) ? diffie_p_len : diffie_g_len;
   char *tmp_buf = (char*)malloc( tmp_len );
+  memset(tmp_buf,0,tmp_len);
   memcpy( tmp_buf, recv_data+sizeof(int)*3, diffie_p_len );
   BN_hex2bn(&(current_dh->p), tmp_buf);
+  memset(tmp_buf,0,tmp_len);
   memcpy( tmp_buf, recv_data+sizeof(int)*3+diffie_p_len, diffie_g_len );
   BN_hex2bn(&(current_dh->g), tmp_buf);
   free(tmp_buf);

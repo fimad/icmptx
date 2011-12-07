@@ -247,7 +247,7 @@ void handle_init_1 (void *packet, unsigned int length ){
   int nonce_len = strlen(nonce_str);
   unsigned int tmp;
   //unsigned int len = sizeof(int)*2+diffie_len+nonce_len;
-  unsigned int len = sizeof(int)*2+diffie_p_len+diffie_g_len+nonce_len;
+  unsigned int len = sizeof(int)*3+diffie_p_len+diffie_g_len+nonce_len;
   unsigned char *data = (unsigned char*)malloc(len);
   if( !data ){
     fprintf(stderr,"INIT 1: Unable to malloc\n");

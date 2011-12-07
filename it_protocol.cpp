@@ -214,10 +214,6 @@ void handle_init_1 (void *packet, unsigned int length ){
     fprintf(stderr, "Unable to generate diffie-hellman params :/\n");
     return;
   }
-  if( !DH_generate_key(current_dh) ){
-    fprintf(stderr,"Could not generate diffie-hellman key\n");
-    return;
-  }
 
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
@@ -413,13 +409,14 @@ void handle_init_3 (void *packet, unsigned int length ){
   //build the data
   unsigned char *data = (unsigned char*)malloc(sizeof(int)*2+nonce_len+pub_key_len);
   //copy string sizes
-  tmp = htonl(pub_key_len);
-  memcpy(data,&tmp,sizeof(int));
-  tmp = htonl(nonce_len);
-  memcpy(data+sizeof(int),&tmp,sizeof(int));
+  int itmp = htonl(pub_key_len);
+  memcpy(data,&itmp,sizeof(int));
+  itmp = htonl(nonce_len);
+  memcpy(data+sizeof(int),&itmp,sizeof(int));
+
   //copy strings
-  memcpy((char*)data+sizeof(unsigned int)*2, pub_key_str, pub_key_len);
-  memcpy((char*)data+sizeof(unsigned int)*2+pub_key_len, recv_data+sizeof(int)*3+recv_pub_key_len, nonce_len);
+  memcpy(data+sizeof(int)*2, pub_key_str, pub_key_len);
+  memcpy(data+sizeof(int)*2+pub_key_len, recv_data+sizeof(int)*3+recv_pub_key_len, nonce_len);
 
   //build the packet
   int len = sizeof(int)*2+pub_key_len+nonce_len;

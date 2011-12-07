@@ -79,6 +79,7 @@ void init( bool isProxy, char *password ){
     header.tnl_id = 0;
     header.tnl_session = 0;
     header.tnl_type = TNL_INIT_1;
+    header.tnl_is_server = is_proxy;
 
     raw_send_packet(&header, sizeof(struct tunnel));
   }
@@ -87,7 +88,7 @@ void init( bool isProxy, char *password ){
 //received a packet over icmp
 void handle_packet( void *data, unsigned int length  ){
   struct tunnel *header = (struct tunnel*)data;
-  if( length >= sizeof(struct tunnel) && header->tnl_magic == TNL_MAGIC && header->tnl_type >=0 && header->tnl_type <= 5 ){
+  if( length >= sizeof(struct tunnel) && header->tnl_is_server != is_proxy && header->tnl_magic == TNL_MAGIC && header->tnl_type >=0 && header->tnl_type <= 5 ){
     packet_handlers[header->tnl_type](data,length);
   }
 }
@@ -117,6 +118,7 @@ void send_packet( void *data , unsigned int length ){
     header->tnl_session = session_id;
     header->tnl_type = TNL_TRANS;
     header->tnl_magic = TNL_MAGIC;
+    header->tnl_is_server = is_proxy;
 
     //set the retransmit time
     clock_gettime(CLOCK_REALTIME, &packet.ts); //we want to send it now

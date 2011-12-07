@@ -16,6 +16,7 @@
 struct tunnel {
   unsigned int tnl_magic;
   unsigned char tnl_type;
+  unsigned char tnl_is_server;
   unsigned short tnl_session;
   unsigned int tnl_id; /*the packet number*/
 } __attribute__ ((packed));

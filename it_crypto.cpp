@@ -30,9 +30,9 @@ void aes_close( aes_system *system ){
 }
 
 unsigned char *aes_encrypt( aes_system *system, unsigned char *plaintext, int *len ){
-  unsigned char *tmp = (unsigned char*)malloc(*len);
+  /*unsigned char *tmp = (unsigned char*)malloc(*len);
   memcpy(tmp,plaintext,*len);
-  return tmp;
+  return tmp;*/
   /* max ciphertext len for a n bytes of plaintext is n + AES_BLOCK_SIZE -1 bytes */
   int c_len = *len + EVP_CIPHER_CTX_block_size(&system->enc), f_len = 0;
   unsigned char *ciphertext = (unsigned char *)malloc(c_len);
@@ -47,9 +47,9 @@ unsigned char *aes_encrypt( aes_system *system, unsigned char *plaintext, int *l
 }
 
 unsigned char *aes_decrypt( aes_system *system, unsigned char *ciphertext, int *len ){
-  unsigned char *tmp = (unsigned char*)malloc(*len);
+/*  unsigned char *tmp = (unsigned char*)malloc(*len);
   memcpy(tmp,ciphertext,*len);
-  return tmp;
+  return tmp;*/
   /* plaintext will always be equal to or lesser than length of ciphertext*/
   int p_len = *len, f_len = 0;
   unsigned char *plaintext = (unsigned char *)malloc(p_len);

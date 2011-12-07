@@ -71,7 +71,7 @@ unsigned short in_cksum(unsigned short *, int);
    int packetsize - maximum size of ICMP data payload
    u_int16_t id - tunnel id field
 */
-int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int packetsize, u_int16_t id) {
+int icmp_tunnel(int sock, int proxy, int forward, struct sockaddr_in *target, int tun_fd, int packetsize, u_int16_t id) {
   int len, result, fromlen, num;
   char* packet;
   fd_set fs;
@@ -173,7 +173,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       }
       memcpy(packet+sizeof(struct icmp),data,length); //copy the data into the packet
 
-      icmp->type = proxy ? 0 : 8;//echo response or echo request
+      icmp->type = (proxy == forward) ? 0 : 8;//echo response or echo request
       icmp->code = 0;
       icmp->id = id;//mark the packet so the other end knows it's a tunnel packet 
       icmp->seq = 0;
@@ -201,7 +201,9 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
      * stateful firewalls)
      */
     if (!proxy && !didSend && !didReceive) {
-      icmp->type = 8;/*echo request*/
+      //icmp->type = 8;/*echo request*/
+      icmp->type = (proxy == forward) ? 0 : 8;//echo response or echo request
+      icmp->code = 0;
       icmp->code = 0;
       icmp->id = id;/*mark the packet so the other end knows it's a tunnel packet*/
       icmp->seq = 0;
@@ -226,7 +228,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
  * serverNameOrIP - the server's host name or IP address
  * tun_fd - the file descriptor of the socket we read and write from
  */
-int run_icmp_tunnel (int id, int packetsize, int isServer, char *serverNameOrIP, char *password, int tun_fd) {
+int run_icmp_tunnel (int id, int packetsize, int isServer, int isForward, char *serverNameOrIP, char *password, int tun_fd) {
   struct sockaddr_in target;
   struct in_addr inp;
   int s;
@@ -249,7 +251,7 @@ int run_icmp_tunnel (int id, int packetsize, int isServer, char *serverNameOrIP,
   }
 
   init( isServer, password );
-  icmp_tunnel(s, isServer, &target, tun_fd, packetsize, (u_int16_t) id);
+  icmp_tunnel(s, isServer, isForward, &target, tun_fd, packetsize, (u_int16_t) id);
 
   close(s);
 

@@ -24,21 +24,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int run_icmp_tunnel (int id, int packetsize, int isServer, char *serverNameOrIP, char *password, int tun_fd);
+int run_icmp_tunnel (int id, int packetsize, int isServer, int isForward, char *serverNameOrIP, char *password, int tun_fd);
 
 /* size of the largest icmp data payload to send, NOT MTU of tun device */
 const int mtu = 65536;
+bool forward = true;
 
-#define USAGE "Usage: %s [-s|-c] server password\n       -s Server Mode\n       -c Client Mode\n   server The host name or IP address of the server\n   password The preshared password used to access the server.\n"
+#define USAGE "Usage: %s [-s|-c] [-f|-b] server password\n       -s Server Mode\n       -c Client Mod\n       -f Forward (ping reply->ping response)\n       -b Backward (ping respons->ping reply)\n   server The host name or IP address of the server\n   password The preshared password used to access the server.\n"
 
 int main(int argc, char **argv) {
   int tun_fd = 0;
 
-  if (argc != 4) {
+  if (argc != 5) {
     fprintf(stderr, USAGE, argv[0]);
     return 1;
   }
   if (strcmp(argv[1],"-c") && strcmp(argv[1],"-s")) {
+    fprintf(stderr, USAGE, argv[0]);
+    return 1;
+  }
+  if (strcmp(argv[2],"-f") && strcmp(argv[2],"-b")) {
     fprintf(stderr, USAGE, argv[0]);
     return 1;
   }
@@ -48,7 +53,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  run_icmp_tunnel(7537, mtu, !strcmp(argv[1],"-s"), argv[2], argv[3], tun_fd);
+  run_icmp_tunnel(7537, mtu, !strcmp(argv[1],"-s"), !strcmp(argv[2],"-f"), argv[3], argv[4], tun_fd);
 
   /* when run_icmp_tunnel returns, we must be finished */
   tun_close(tun_fd);

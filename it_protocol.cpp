@@ -400,13 +400,15 @@ void handle_init_3 (void *packet, unsigned int length ){
   //generate diffie-hellman secret
   unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
   DH_compute_key(secret, recv_pub_key, current_dh);
-  free(secret);
 
   //generate ephemeral key
   aes_key key;
   aes_gen_key(secret, DH_size(current_dh), &key);
   aes_init(&key,&ephemeral_aes);
+  free(secret);
   DH_free(current_dh);
+
+  //set up session
   current_dh = NULL;
   state = TNL_READY; //as far as the server knows the connection is established now
   next_send_message = 0;
@@ -482,12 +484,12 @@ void handle_init_4 (void *packet, unsigned int length ){
   //generate diffie-hellman secret
   unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
   DH_compute_key(secret, recv_pub_key, current_dh);
-  free(secret);
 
   //generate ephemeral key
   aes_key key;
   aes_gen_key(secret, DH_size(current_dh), &key);
   aes_init(&key,&ephemeral_aes);
+  free(secret);
 
   //free diffie-hellman
   DH_free(current_dh);

@@ -97,18 +97,12 @@ void handle_packet( void *data, unsigned int length  ){
 void send_packet( void *data , unsigned int length ){
   if( state == TNL_READY ){ //only forward packets if we are in an established session
     resend_packet packet;
-    packet.length = length+sizeof(struct tunnel);
+    packet.length = length;
     packet.id = next_send_message;
     next_send_message++;
     packet.should_resend = 1; //TODO: change this back to 0 to enable resending packets
 
-    //encrypt the payload
-    unsigned char *enc_data = aes_encrypt( &ephemeral_aes, (unsigned char*)data, (int*)&length );
-    packet.data = malloc(length+sizeof(struct tunnel));
-
-    //copy the encrypted payload
-    memcpy( packet.data+sizeof(struct tunnel), enc_data, length );
-    free(enc_data);
+    packet.data = construct_packet( &ephemeral_aes, (unsigned char*)data, (int*)&packet.length );
 
     //set up the packet's header
     struct tunnel *header = (struct tunnel*)packet.data;

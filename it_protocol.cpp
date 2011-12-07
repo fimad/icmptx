@@ -598,12 +598,13 @@ void handle_trans (void *packet, unsigned int length ){
 
 void handle_recv (void *packet, unsigned int length ){
 
-  printf("Got a RECV\n");
 
   struct tunnel *header = (struct tunnel *)packet;
 
   if( state != TNL_READY || header->tnl_session != session_id )
     return;
+
+  printf("Got a RECV(%d)\n", header->tnl_id);
 
   confirmed_sent.insert(header->tnl_id);//mark that the id has been confirmed
 }

@@ -219,6 +219,9 @@ void handle_init_1 (void *packet, unsigned int length ){
     return;
   }
 
+  //Generate the public and private key for this DH
+  DH_generate_key(current_dh);
+
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
     fprintf(stderr,"INIT 1: Unable to generate a nonce\n");
@@ -230,17 +233,21 @@ void handle_init_1 (void *packet, unsigned int length ){
   unsigned char *p;
   char *nonce_str = BN_bn2hex(&nonce);
 
+  /*
   //int diffie_len = i2d_DHparams(current_dh, &diffie_str);
   int diffie_len = i2d_DHparams(current_dh, NULL);
   p = diffie_str = (unsigned char*)malloc(diffie_len);
   i2d_DHparams(current_dh, &p);
-
-  //Generate the public and private key for this DH
-  DH_generate_key(current_dh);
+  */
+  char *diffie_p = BN_bn2hex(current_dh->p);
+  int diffie_p_len = strlen(diffie_p);
+  char *diffie_g = BN_bn2hex(current_dh->g);
+  int diffie_g_len = strlen(diffie_p);
 
   int nonce_len = strlen(nonce_str);
   unsigned int tmp;
-  unsigned int len = sizeof(int)*2+diffie_len+nonce_len;
+  //unsigned int len = sizeof(int)*2+diffie_len+nonce_len;
+  unsigned int len = sizeof(int)*2+diffie_p_len+diffie_g_len+nonce_len;
   unsigned char *data = (unsigned char*)malloc(len);
   if( !data ){
     fprintf(stderr,"INIT 1: Unable to malloc\n");
@@ -249,14 +256,17 @@ void handle_init_1 (void *packet, unsigned int length ){
   }
 
   //copy length of diffie-hellman and nonce to the packet
-  tmp = htonl(diffie_len);
+  tmp = htonl(diffie_p_len);
   memcpy(data, &tmp, sizeof(unsigned int));
-  tmp = htonl(nonce_len);
+  tmp = htonl(diffie_g_len);
   memcpy(data+sizeof(unsigned int), &tmp, sizeof(unsigned int));
+  tmp = htonl(nonce_len);
+  memcpy(data+sizeof(unsigned int)*2, &tmp, sizeof(unsigned int));
 
   //copy the actual strings to the packet
-  memcpy(data+sizeof(unsigned int)*2, diffie_str, diffie_len);
-  memcpy(data+sizeof(unsigned int)*2+diffie_len, nonce_str, nonce_len);
+  memcpy(data+sizeof(unsigned int)*3, diffie_p, diffie_p_len);
+  memcpy(data+sizeof(unsigned int)*3+diffie_p_len, diffie_g, diffie_g_len);
+  memcpy(data+sizeof(unsigned int)*3+diffie_p_len+diffie_g_len, nonce_str, nonce_len);
 
   void *packet_data = construct_packet(&preshared_aes, data, (int*)&len);
   free(data);
@@ -280,21 +290,25 @@ void handle_init_2 (void *packet, unsigned int length ){
   printf("Got an INIT_2\n");
 
   int data_len = length - sizeof(struct tunnel);
-  int diffie_len;
+  int diffie_p_len;
+  int diffie_g_len;
   int recv_nonce_len;
   unsigned char *recv_data = aes_decrypt(&preshared_aes, (unsigned char*)packet+sizeof(struct tunnel), &data_len);
 
   //extract the length of the dh and the nonce
-  memcpy(&diffie_len, recv_data, sizeof(int));
-  memcpy(&recv_nonce_len, recv_data+sizeof(int), sizeof(int));
-  diffie_len = ntohl(diffie_len);
+  memcpy(&diffie_p_len, recv_data, sizeof(int));
+  memcpy(&diffie_g_len, recv_data+sizeof(int), sizeof(int));
+  memcpy(&recv_nonce_len, recv_data+sizeof(int)*2, sizeof(int));
+  diffie_p_len = ntohl(diffie_p_len);
+  diffie_g_len = ntohl(diffie_g_len);
   recv_nonce_len = ntohl(recv_nonce_len);
 
-  if( sizeof(int)*2+diffie_len+recv_nonce_len != data_len ){
-    fprintf(stderr, "Non matching sizes for this packet, should be %d, but is %d\n", (sizeof(int)*2+diffie_len+recv_nonce_len), data_len);
+  if( sizeof(int)*3+diffie_p_len+diffie_g_len+recv_nonce_len != data_len ){
+    fprintf(stderr, "Non matching sizes for this packet, should be %d, but is %d\n", (sizeof(int)*3+diffie_p_len+diffie_g_len+recv_nonce_len), data_len);
     return;
   }
 
+  /*
   unsigned char *dh_params = recv_data+sizeof(int)*2;
   //current_dh = d2i_DHparams(NULL, (const unsigned char**)&dh_params, diffie_len);
   current_dh = NULL;
@@ -302,6 +316,22 @@ void handle_init_2 (void *packet, unsigned int length ){
     fprintf(stderr, "could not unpack diffie-hellman params\n");
     return;
   }
+  */
+  //init dh
+  current_dh = DH_new();
+  current_dh->p = NULL;
+  current_dh->g = NULL;
+
+  //copy p and g
+  int tmp_len = (diffie_p_len>diffie_g_len) ? diffie_p_len : diffie_g_len;
+  char *tmp_buf = (char*)malloc( tmp_len );
+  memcpy( tmp_buf, recv_data+sizeof(int)*3, diffie_p_len );
+  BN_hex2bn(&(current_dh->p), tmp_buf);
+  memcpy( tmp_buf, recv_data+sizeof(int)*3+diffie_p_len, diffie_g_len );
+  BN_hex2bn(&(current_dh->g), tmp_buf);
+  free(tmp_buf);
+
+  //gen pub and priv key
   if( !DH_generate_key(current_dh) ){
     fprintf(stderr,"Could not generate diffie-hellman key\n");
     return;
@@ -333,7 +363,7 @@ void handle_init_2 (void *packet, unsigned int length ){
   //copy the strings into the buffer
   memcpy(data+sizeof(int)*3, pub_key_str, pub_key_len);
   memcpy(data+sizeof(int)*3+pub_key_len, nonce_str, nonce_len);
-  memcpy(data+sizeof(int)*3+pub_key_len+nonce_len, recv_data+sizeof(int)*2+diffie_len, recv_nonce_len);
+  memcpy(data+sizeof(int)*3+pub_key_len+nonce_len, recv_data+sizeof(int)*3+diffie_p_len+diffie_g_len, recv_nonce_len);
 
   //build the packet
   int len = sizeof(int)*3+pub_key_len+nonce_len+recv_nonce_len;

@@ -152,7 +152,8 @@ bool should_resend_packet( ){
       should_stop = true;
     }
   }
-  return( !packets_to_resend.empty() && compare(tmp,packets_to_resend.top()));
+  //return( !packets_to_resend.empty() && compare(tmp,packets_to_resend.top()));
+  return( !packets_to_resend.empty() );
 }
 
 void next_resend_packet( void **data , unsigned int *length ){
@@ -276,6 +277,10 @@ void handle_init_2 (void *packet, unsigned int length ){
 
   const unsigned char *dh_params = recv_data+sizeof(int)*2;
   current_dh = d2i_DHparams(NULL, &dh_params, diffie_len);
+  if( current_dh == NULL ){
+    fprintf(stderr, "could not unpack diffie-hellman params\n");
+    return;
+  }
   if( !DH_generate_key(current_dh) ){
     fprintf(stderr,"Could not generate diffie-hellman key\n");
     return;

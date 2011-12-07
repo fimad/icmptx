@@ -157,8 +157,8 @@ bool should_resend_packet( ){
       should_stop = true;
     }
   }
-  //return( !packets_to_resend.empty() && compare(tmp,packets_to_resend.top()));
-  return( !packets_to_resend.empty() );
+  return( !packets_to_resend.empty() && compare(tmp,packets_to_resend.top()));
+  //return( !packets_to_resend.empty() );
 }
 
 void next_resend_packet( void **data , unsigned int *length ){

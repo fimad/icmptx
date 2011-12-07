@@ -244,6 +244,9 @@ void handle_init_1 (void *packet, unsigned int length ){
   char *diffie_g = BN_bn2hex(current_dh->g);
   int diffie_g_len = strlen(diffie_p);
 
+  printf("my p is: %s\n", diffie_p);
+  printf("my g is: %s\n", diffie_g);
+
   int nonce_len = strlen(nonce_str);
   unsigned int tmp;
   //unsigned int len = sizeof(int)*2+diffie_len+nonce_len;
@@ -323,13 +326,15 @@ void handle_init_2 (void *packet, unsigned int length ){
   current_dh->g = NULL;
 
   //copy p and g
-  int tmp_len = (diffie_p_len>diffie_g_len) ? diffie_p_len : diffie_g_len;
+  int tmp_len = ((diffie_p_len>diffie_g_len) ? diffie_p_len : diffie_g_len)+1;
   char *tmp_buf = (char*)malloc( tmp_len );
   memset(tmp_buf,0,tmp_len);
   memcpy( tmp_buf, recv_data+sizeof(int)*3, diffie_p_len );
+  printf("my p is: %s\n", tmp_buf);
   BN_hex2bn(&(current_dh->p), tmp_buf);
   memset(tmp_buf,0,tmp_len);
   memcpy( tmp_buf, recv_data+sizeof(int)*3+diffie_p_len, diffie_g_len );
+  printf("my g is: %s\n", tmp_buf);
   BN_hex2bn(&(current_dh->g), tmp_buf);
   free(tmp_buf);
 

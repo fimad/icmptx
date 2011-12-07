@@ -447,6 +447,11 @@ void handle_init_3 (void *packet, unsigned int length ){
   //generate diffie-hellman secret
   unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
   DH_compute_key(secret, recv_pub_key, current_dh);
+  printf("secret: ");
+  for( int i=0; i < DH_size(current_dh); i++){
+    printf("%x", secret[i]);
+  }
+  printf("\n");
 
   //generate ephemeral key
   aes_key key;
@@ -535,6 +540,11 @@ void handle_init_4 (void *packet, unsigned int length ){
   //generate diffie-hellman secret
   unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
   DH_compute_key(secret, recv_pub_key, current_dh);
+  printf("secret: ");
+  for( int i=0; i < DH_size(current_dh); i++){
+    printf("%x", secret[i]);
+  }
+  printf("\n");
 
   //generate ephemeral key
   aes_key key;

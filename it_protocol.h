@@ -8,7 +8,7 @@
 #define TNL_IDLE    -1
 #define TNL_READY   -2
 
-#define TNL_MAGIC 0xdeadbeef
+#define TNL_MAGIC htonl(0xdeadbeef)
 
 /*
  * Tunnel header

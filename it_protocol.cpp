@@ -95,9 +95,7 @@ void handle_packet( void *data, unsigned int length  ){
 
 //just the data
 void send_packet( void *data , unsigned int length ){
-  printf("send_packet called\n");
   if( state == TNL_READY ){ //only forward packets if we are in an established session
-    printf("Actually attempting to forward packet\n");
     resend_packet packet;
     packet.length = length+sizeof(struct tunnel);
     packet.id = next_send_message;
@@ -148,7 +146,6 @@ bool should_resend_packet( ){
   while( !packets_to_resend.empty() && !should_stop ){ //pop confirmed packets from the queue
     resend_packet p = packets_to_resend.top();
     if( confirmed_sent.count( p.id ) > 0 || p.should_resend == 2 ){
-      printf("I AM DELETING RESEND_PACKETS SUPPOSEDLY\n");
       packets_to_resend.pop();
       struct tunnel *header = (struct tunnel*)p.data;
       if( header->tnl_type == TNL_TRANS){
@@ -445,7 +442,8 @@ void handle_init_3 (void *packet, unsigned int length ){
   printf("my public key is: %s\n", pub_key_str);
 
   //generate diffie-hellman secret
-  unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
+  unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh)+1);
+  memset(secret,0,DH_size(current_dh)+1);
   DH_compute_key(secret, recv_pub_key, current_dh);
   printf("secret: ");
   for( int i=0; i < DH_size(current_dh); i++){
@@ -457,11 +455,13 @@ void handle_init_3 (void *packet, unsigned int length ){
   aes_key key;
   aes_gen_key(secret, DH_size(current_dh), &key);
   aes_init(&key,&ephemeral_aes);
+
+  //release dh
   free(secret);
   DH_free(current_dh);
+  current_dh = NULL;
 
   //set up session
-  current_dh = NULL;
   state = TNL_READY; //as far as the server knows the connection is established now
   next_send_message = 0;
   next_recv_message = 0;
@@ -538,7 +538,8 @@ void handle_init_4 (void *packet, unsigned int length ){
   free(tmp);
 
   //generate diffie-hellman secret
-  unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
+  unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh)+1);
+  memset(secret,0,DH_size(current_dh)+1);
   DH_compute_key(secret, recv_pub_key, current_dh);
   printf("secret: ");
   for( int i=0; i < DH_size(current_dh); i++){
@@ -550,9 +551,9 @@ void handle_init_4 (void *packet, unsigned int length ){
   aes_key key;
   aes_gen_key(secret, DH_size(current_dh), &key);
   aes_init(&key,&ephemeral_aes);
-  free(secret);
 
   //free diffie-hellman
+  free(secret);
   DH_free(current_dh);
   current_dh = NULL;
 

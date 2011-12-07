@@ -163,8 +163,6 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
     //resend any packets that have not been confirmed recieved and has passed their timeout
     while( should_resend_packet() ){
 
-      printf("Should be resending packet\n");
-
       void *data;
       unsigned int length;
       next_resend_packet(&data,&length);
@@ -190,7 +188,6 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
 
     //shuffle decrypted packets from icmp to the tunnel interface
     while( did_recieve_packet() ){ 
-      printf("Should be receiving packet\n");
       void *data;
       unsigned int length;
       recieve_packet(&data, &length);

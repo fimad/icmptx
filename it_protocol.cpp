@@ -324,9 +324,9 @@ void handle_init_2 (void *packet, unsigned int length ){
   memcpy(&data+sizeof(int)*2,&tmp,sizeof(int));
 
   //copy the strings into the buffer
-  snprintf((char*)data+sizeof(unsigned int)*3, pub_key_len, "%s", pub_key_str);
-  snprintf((char*)data+sizeof(unsigned int)*3+pub_key_len, nonce_len, "%s", nonce_str);
-  snprintf((char*)data+sizeof(unsigned int)*3+pub_key_len+nonce_len, recv_nonce_len, "%s", recv_data+sizeof(int)*2+diffie_len);
+  memcpy((char*)data+sizeof(unsigned int)*3, pub_key_str, pub_key_len);
+  memcpy((char*)data+sizeof(unsigned int)*3+pub_key_len, nonce_str, nonce_len);
+  memcpy((char*)data+sizeof(unsigned int)*3+pub_key_len+nonce_len, recv_data+sizeof(int)*2+diffie_len, recv_nonce_len);
 
   //build the packet
   int len = sizeof(int)*3+pub_key_len+nonce_len+recv_nonce_len;
@@ -414,8 +414,8 @@ void handle_init_3 (void *packet, unsigned int length ){
   tmp = htonl(nonce_len);
   memcpy(&data+sizeof(int),&tmp,sizeof(int));
   //copy strings
-  snprintf((char*)data+sizeof(unsigned int)*2, pub_key_len, "%s", pub_key_str);
-  snprintf((char*)data+sizeof(unsigned int)*2+pub_key_len, nonce_len, "%s", recv_data+sizeof(int)*3+recv_pub_key_len);
+  memcpy((char*)data+sizeof(unsigned int)*2, pub_key_str, pub_key_len);
+  memcpy((char*)data+sizeof(unsigned int)*2+pub_key_len, recv_data+sizeof(int)*3+recv_pub_key_len, nonce_len);
 
   //build the packet
   int len = sizeof(int)*2+pub_key_len+nonce_len;

@@ -220,7 +220,10 @@ void handle_init_1 (void *packet, unsigned int length ){
   }
 
   //Generate the public and private key for this DH
-  DH_generate_key(current_dh);
+  if( !DH_generate_key(current_dh) ){
+    fprintf(stderr,"Could not generate diffie-hellman key\n");
+    return;
+  }
 
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
@@ -332,6 +335,7 @@ void handle_init_2 (void *packet, unsigned int length ){
   memcpy( tmp_buf, recv_data+sizeof(int)*3, diffie_p_len );
   printf("my p is: %s\n", tmp_buf);
   BN_hex2bn(&(current_dh->p), tmp_buf);
+
   memset(tmp_buf,0,tmp_len);
   memcpy( tmp_buf, recv_data+sizeof(int)*3+diffie_p_len, diffie_g_len );
   printf("my g is: %s\n", tmp_buf);
@@ -356,6 +360,7 @@ void handle_init_2 (void *packet, unsigned int length ){
   //get diffie hellman public key
   char *pub_key_str = BN_bn2hex(current_dh->pub_key);
   int pub_key_len = strlen(pub_key_str);
+  printf("my public key is: %s\n", pub_key_str);
 
   unsigned char *data = (unsigned char*)malloc(sizeof(int)*3+recv_nonce_len+nonce_len+pub_key_len);
   
@@ -427,14 +432,17 @@ void handle_init_3 (void *packet, unsigned int length ){
   //extract pub_key
   BIGNUM *recv_pub_key = NULL;
   char *tmp = (char*)malloc(recv_pub_key_len+1);
+  memset(tmp,0,recv_pub_key_len+1);
   memcpy(tmp,recv_data+sizeof(int)*3, recv_pub_key_len);
   tmp[recv_pub_key_len] = 0;
+  printf("their public key is: %s\n", tmp);
   BN_hex2bn(&recv_pub_key, tmp);
   free(tmp);
 
   //save our dh public key
   char *pub_key_str = BN_bn2hex(current_dh->pub_key);
   int pub_key_len = strlen(pub_key_str);
+  printf("my public key is: %s\n", pub_key_str);
 
   //generate diffie-hellman secret
   unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));
@@ -517,8 +525,12 @@ void handle_init_4 (void *packet, unsigned int length ){
 
   //extract pub_key
   BIGNUM *recv_pub_key = NULL;
-  *(recv_data+sizeof(int)*3+recv_pub_key_len) = 0; //add a null byte, so we can just pass the reference to the hex2bn
-  BN_hex2bn(&recv_pub_key, (const char*)recv_data+sizeof(int)*3);
+  char *tmp = (char*)malloc(recv_pub_key_len+1);
+  memset(tmp,0,recv_pub_key_len+1);
+  memcpy(tmp, recv_data+sizeof(int)*3, recv_pub_key_len);
+  BN_hex2bn(&recv_pub_key, tmp);
+  printf("their public key is: %s\n", tmp);
+  free(tmp);
 
   //generate diffie-hellman secret
   unsigned char *secret = (unsigned char*)malloc(DH_size(current_dh));

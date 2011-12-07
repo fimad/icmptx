@@ -210,6 +210,10 @@ void handle_init_1 (void *packet, unsigned int length ){
       2 /*a parameter that must be 2 or 5*/,
       NULL /*no callback*/,
       NULL /*no args to callback*/);
+  if( current_dh == NULL ){
+    fprintf(stderr, "Unable to generate diffie-hellman params :/\n");
+    return;
+  }
 
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){

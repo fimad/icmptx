@@ -210,7 +210,7 @@ void handle_init_1 (void *packet, unsigned int length ){
 
   //create a diffie-hellman context
   current_dh = DH_generate_parameters(
-      64 /*prime length*/,
+      256 /*prime length*/,
       DH_GENERATOR_5 /*a parameter that must be 2 or 5*/,
       NULL /*no callback*/,
       NULL /*no args to callback*/);

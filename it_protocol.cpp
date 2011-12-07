@@ -218,7 +218,6 @@ void handle_init_1 (void *packet, unsigned int length ){
     fprintf(stderr, "Unable to generate diffie-hellman params :/\n");
     return;
   }
-  DH_generate_key(current_dh);
 
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
@@ -235,6 +234,9 @@ void handle_init_1 (void *packet, unsigned int length ){
   int diffie_len = i2d_DHparams(current_dh, NULL);
   p = diffie_str = (unsigned char*)malloc(diffie_len);
   i2d_DHparams(current_dh, &p);
+
+  //Generate the public and private key for this DH
+  DH_generate_key(current_dh);
 
   int nonce_len = strlen(nonce_str);
   unsigned int tmp;

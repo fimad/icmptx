@@ -8,10 +8,13 @@
 #define TNL_IDLE    -1
 #define TNL_READY   -2
 
+#define TNL_MAGIC 0xdeadbeef
+
 /*
  * Tunnel header
  */
 struct tunnel {
+  unsigned int tnl_magic;
   unsigned int tnl_id; /*the packet number*/
   unsigned char tnl_type;
   unsigned short tnl_session;

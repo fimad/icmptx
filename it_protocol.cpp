@@ -114,6 +114,7 @@ void send_packet( void *data , unsigned int length ){
     header->tnl_id = packet.id;
     header->tnl_session = session_id;
     header->tnl_type = TNL_TRANS;
+    header->tnl_magic = TNL_MAGIC;
 
     //set the retransmit time
     clock_gettime(CLOCK_REALTIME, &packet.ts); //we want to send it now
@@ -123,6 +124,8 @@ void send_packet( void *data , unsigned int length ){
 
 //a way to send authorization packets
 void raw_send_packet( void *data, unsigned int length ){
+    struct tunnel *header = (struct tunnel*)data;
+    header->tnl_magic = TNL_MAGIC;
     resend_packet packet;
     packet.length = length;
     packet.id = 0;

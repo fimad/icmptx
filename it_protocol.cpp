@@ -122,6 +122,7 @@ void send_packet( void *data , unsigned int length ){
 void raw_send_packet( void *data, unsigned int length ){
     struct tunnel *header = (struct tunnel*)data;
     header->tnl_magic = TNL_MAGIC;
+    header->tnl_is_server = is_proxy;
     resend_packet packet;
     packet.length = length;
     packet.id = 0;

@@ -15,7 +15,7 @@ struct tunnel {
   unsigned int tnl_id; /*the packet number*/
   unsigned char tnl_type;
   unsigned short tnl_session;
-};
+} __attribute__ ((packed));
 
 void init( bool isProxy, char *password);
 void handle_packet( void *data, unsigned int length ); //received a packet over icmp

@@ -99,7 +99,7 @@ void send_packet( void *data , unsigned int length ){
   if( state == TNL_READY ){ //only forward packets if we are in an established session
     printf("Actually attempting to forward packet\n");
     resend_packet packet;
-    packet.length = length;
+    packet.length = length+sizeof(struct tunnel);
     packet.id = next_send_message;
     next_send_message++;
     packet.should_resend = 1; //TODO: change this back to 0 to enable resending packets

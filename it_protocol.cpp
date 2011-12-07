@@ -217,7 +217,7 @@ void handle_init_1 (void *packet, unsigned int length ){
 
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
-    perror("INIT 1: Unable to generate a nonce");
+    fprintf(stderr,"INIT 1: Unable to generate a nonce\n");
     DH_free(current_dh);
     return;
   }
@@ -236,7 +236,7 @@ void handle_init_1 (void *packet, unsigned int length ){
   unsigned int len = sizeof(int)*2+diffie_len+nonce_len;
   unsigned char *data = (unsigned char*)malloc(len);
   if( !data ){
-    perror("INIT 1: Unable to malloc");
+    fprintf(stderr,"INIT 1: Unable to malloc\n");
     DH_free(current_dh);
     return;
   }
@@ -370,12 +370,12 @@ void handle_init_3 (void *packet, unsigned int length ){
 
   //sanity checks
   if( recv_pub_key_len+nonce_len+my_nonce_len+sizeof(int)*3 != data_len ){
-    perror("INIT 3: incorrect data size");
+    fprintf(stderr,"INIT 3: incorrect data size\n");
     return;
   }
   char * my_nonce_str = BN_bn2hex(&nonce);
-  if( strncmp(my_nonce_str,(const char*)recv_data+sizeof(int)*3+recv_pub_key_len+nonce_len,strlen(my_nonce_str)) != 0 ){
-    perror("INIT 3: nonce does not match the one that I sent.");
+  if( memcmp(my_nonce_str,(const char*)recv_data+sizeof(int)*3+recv_pub_key_len+nonce_len,strlen(my_nonce_str)) != 0 ){
+    fprintf(stderr,"INIT 3: nonce does not match the one that I sent.\n");
     return;
   }
   free(my_nonce_str);
@@ -457,12 +457,12 @@ void handle_init_4 (void *packet, unsigned int length ){
 
   //sanity checks
   if( recv_pub_key_len+nonce_len+sizeof(int)*2 != data_len ){
-    perror("INIT 3: incorrect data size");
+    fprintf(stderr,"INIT 4: incorrect data size\n");
     return;
   }
   char * my_nonce_str = BN_bn2hex(&nonce);
-  if( strncmp(my_nonce_str,(const char*)recv_data+sizeof(int)*2+recv_pub_key_len,strlen(my_nonce_str)) != 0 ){
-    perror("INIT 3: nonce does not match the one that I sent.");
+  if( memcmp(my_nonce_str,(const char*)recv_data+sizeof(int)*2+recv_pub_key_len,strlen(my_nonce_str)) != 0 ){
+    fprintf(stderr,"INIT 4: nonce does not match the one that I sent.\n");
     return;
   }
   free(my_nonce_str);
@@ -541,7 +541,7 @@ unsigned char *construct_packet(aes_system *system, unsigned char *plaintext, in
   unsigned char *enc_data = aes_encrypt(system, plaintext, len);
   unsigned char *packet = (unsigned char*)malloc(sizeof(struct tunnel)+*len);
   if( !packet ){
-    perror("Could not malloc");
+    fprintf(stderr,"Could not malloc\n");
     exit(-1);
   }
   memcpy(packet+sizeof(struct tunnel), enc_data, *len);

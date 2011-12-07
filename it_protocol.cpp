@@ -249,7 +249,7 @@ void handle_init_1 (void *packet, unsigned int length ){
 
   //copy the actual strings to the packet
   memcpy(data+sizeof(unsigned int)*2, diffie_str, diffie_len);
-  snprintf((char*)data+sizeof(unsigned int)*2+diffie_len, nonce_len, "%s", nonce_str);
+  memcpy(data+sizeof(unsigned int)*2+diffie_len, nonce_str, nonce_len);
 
   void *packet_data = construct_packet(&preshared_aes, data, (int*)&len);
   free(data);

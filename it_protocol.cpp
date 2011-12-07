@@ -317,16 +317,16 @@ void handle_init_2 (void *packet, unsigned int length ){
   
   //copy string sizes to data
   unsigned int tmp = htonl(pub_key_len);
-  memcpy(&data,&tmp,sizeof(int));
+  memcpy(data,&tmp,sizeof(int));
   tmp = htonl(nonce_len);
-  memcpy(&data+sizeof(int),&tmp,sizeof(int));
+  memcpy(data+sizeof(int),&tmp,sizeof(int));
   tmp = htonl(recv_nonce_len);
-  memcpy(&data+sizeof(int)*2,&tmp,sizeof(int));
+  memcpy(data+sizeof(int)*2,&tmp,sizeof(int));
 
   //copy the strings into the buffer
-  memcpy((char*)data+sizeof(unsigned int)*3, pub_key_str, pub_key_len);
-  memcpy((char*)data+sizeof(unsigned int)*3+pub_key_len, nonce_str, nonce_len);
-  memcpy((char*)data+sizeof(unsigned int)*3+pub_key_len+nonce_len, recv_data+sizeof(int)*2+diffie_len, recv_nonce_len);
+  memcpy(data+sizeof(int)*3, pub_key_str, pub_key_len);
+  memcpy(data+sizeof(int)*3+pub_key_len, nonce_str, nonce_len);
+  memcpy(data+sizeof(int)*3+pub_key_len+nonce_len, recv_data+sizeof(int)*2+diffie_len, recv_nonce_len);
 
   //build the packet
   int len = sizeof(int)*3+pub_key_len+nonce_len+recv_nonce_len;
@@ -410,9 +410,9 @@ void handle_init_3 (void *packet, unsigned int length ){
   unsigned char *data = (unsigned char*)malloc(sizeof(int)*2+nonce_len+pub_key_len);
   //copy string sizes
   tmp = htonl(pub_key_len);
-  memcpy(&data,&tmp,sizeof(int));
+  memcpy(data,&tmp,sizeof(int));
   tmp = htonl(nonce_len);
-  memcpy(&data+sizeof(int),&tmp,sizeof(int));
+  memcpy(data+sizeof(int),&tmp,sizeof(int));
   //copy strings
   memcpy((char*)data+sizeof(unsigned int)*2, pub_key_str, pub_key_len);
   memcpy((char*)data+sizeof(unsigned int)*2+pub_key_len, recv_data+sizeof(int)*3+recv_pub_key_len, nonce_len);

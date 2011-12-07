@@ -222,7 +222,7 @@ void handle_init_1 (void *packet, unsigned int length ){
     return;
   }
 
-  unsigned char *diffie_str;
+  unsigned char *diffie_str = NULL;
   char *nonce_str = BN_bn2hex(&nonce);
   int diffie_len = i2d_DHparams(current_dh, &diffie_str);
   int nonce_len = strlen(nonce_str);

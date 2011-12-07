@@ -223,8 +223,14 @@ void handle_init_1 (void *packet, unsigned int length ){
   }
 
   unsigned char *diffie_str = NULL;
+  unsigned char *p;
   char *nonce_str = BN_bn2hex(&nonce);
-  int diffie_len = i2d_DHparams(current_dh, &diffie_str);
+
+  //int diffie_len = i2d_DHparams(current_dh, &diffie_str);
+  int diffie_len = i2d_DHparams(current_dh, NULL);
+  p = diffie_str = (unsigned char*)malloc(diffie_len);
+  i2d_DHparams(current_dh, &p);
+
   int nonce_len = strlen(nonce_str);
   unsigned int tmp;
   unsigned int len = sizeof(int)*2+diffie_len+nonce_len;
@@ -282,9 +288,10 @@ void handle_init_2 (void *packet, unsigned int length ){
     return;
   }
 
-  const unsigned char *dh_params = recv_data+sizeof(int)*2;
-  current_dh = d2i_DHparams(NULL, &dh_params, diffie_len);
-  if( current_dh == NULL ){
+  unsigned char *dh_params = recv_data+sizeof(int)*2;
+  //current_dh = d2i_DHparams(NULL, (const unsigned char**)&dh_params, diffie_len);
+  current_dh = NULL;
+  if( !d2i_DHparams(&current_dh, (const unsigned char**)&dh_params, diffie_len) ){
     fprintf(stderr, "could not unpack diffie-hellman params\n");
     return;
   }

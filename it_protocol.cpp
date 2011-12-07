@@ -506,18 +506,18 @@ void handle_trans (void *packet, unsigned int length ){
   if( state != TNL_READY )
     return;
 
-  printf("Got a TRANS\n");
-
   struct tunnel *header = (struct tunnel*)packet;
   if( header->tnl_session != session_id ) //only care about packets from the current session
     return;
+
+  printf("Got a TRANS(%d)\n", header->tnl_id );
 
   //decrypt the packet
   int data_len = length - sizeof(struct tunnel);
   unsigned char *recv_data = aes_decrypt(&ephemeral_aes, (unsigned char*)packet+sizeof(struct tunnel), &data_len);
 
   received_packet recv;
-  recv.length = length;
+  recv.length = data_len;
   recv.data = recv_data;
 
   //free any old packets that may be laying around
@@ -532,7 +532,7 @@ void handle_trans (void *packet, unsigned int length ){
   resp_header.tnl_id = header->tnl_id;
   resp_header.tnl_type = TNL_RECV;
 
-  raw_send_packet(&resp_header, sizeof(struct tunnel));
+  //raw_send_packet(&resp_header, sizeof(struct tunnel));
 }
 
 void handle_recv (void *packet, unsigned int length ){

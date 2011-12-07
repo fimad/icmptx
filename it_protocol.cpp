@@ -527,7 +527,7 @@ void handle_init_4 (void *packet, unsigned int length ){
   BIGNUM *recv_pub_key = NULL;
   char *tmp = (char*)malloc(recv_pub_key_len+1);
   memset(tmp,0,recv_pub_key_len+1);
-  memcpy(tmp, recv_data+sizeof(int)*3, recv_pub_key_len);
+  memcpy(tmp, recv_data+sizeof(int)*2, recv_pub_key_len);
   BN_hex2bn(&recv_pub_key, tmp);
   printf("their public key is: %s\n", tmp);
   free(tmp);

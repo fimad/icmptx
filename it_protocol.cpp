@@ -277,13 +277,13 @@ void handle_init_2 (void *packet, unsigned int length ){
   const unsigned char *dh_params = recv_data+sizeof(int)*2;
   current_dh = d2i_DHparams(NULL, &dh_params, diffie_len);
   if( !DH_generate_key(current_dh) ){
-    perror("Could not generate diffie-hellman key");
+    fprintf(stderr,"Could not generate diffie-hellman key\n");
     return;
   }
 
   //generate a nonce
   if( BN_rand(&nonce, 1024/*num bits*/, -1/*I don't care what the msb is*/, 0/*I don't care if it's odd*/) != 1){
-    perror("INIT 2: Unable to generate a nonce");
+    fprintf(stderr,"INIT 2: Unable to generate a nonce\n");
     DH_free(current_dh);
     return;
   }
@@ -320,6 +320,7 @@ void handle_init_2 (void *packet, unsigned int length ){
   header->tnl_id = 0;
   header->tnl_session = 0;
 
+  printf("Sending INIT_3 hopefully...");
   raw_send_packet(packet_data, len);
   free(packet_data);
   free(nonce_str);

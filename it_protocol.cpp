@@ -381,7 +381,7 @@ void handle_init_3 (void *packet, unsigned int length ){
   free(my_nonce_str);
 
   //extract pub_key
-  BIGNUM *recv_pub_key;
+  BIGNUM *recv_pub_key = NULL;
   char *tmp = (char*)malloc(recv_pub_key_len+1);
   memcpy(tmp,recv_data+sizeof(int)*3, recv_pub_key_len);
   tmp[recv_pub_key_len] = 0;

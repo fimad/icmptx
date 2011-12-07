@@ -382,10 +382,11 @@ void handle_init_3 (void *packet, unsigned int length ){
 
   //extract pub_key
   BIGNUM *recv_pub_key;
-  unsigned char tmp = *(recv_data+sizeof(int)*3+recv_pub_key_len); //holds the value of the byte we will replace with 0
-  *(recv_data+sizeof(int)*3+recv_pub_key_len) = 0; //add a null byte, so we can just pass the reference to the hex2bn
-  BN_hex2bn(&recv_pub_key, (const char*)recv_data+sizeof(int)*3);
-  *(recv_data+sizeof(int)*3+recv_pub_key_len) = tmp;
+  char *tmp = (char*)malloc(recv_pub_key_len+1);
+  memcpy(tmp,recv_data+sizeof(int)*3, recv_pub_key_len);
+  tmp[recv_pub_key_len] = 0;
+  BN_hex2bn(&recv_pub_key, tmp);
+  free(tmp);
 
   //save our dh public key
   char *pub_key_str = BN_bn2hex(current_dh->pub_key);

@@ -374,7 +374,7 @@ void handle_init_3 (void *packet, unsigned int length ){
     return;
   }
   char * my_nonce_str = BN_bn2hex(&nonce);
-  if( memcmp(my_nonce_str,(const char*)recv_data+sizeof(int)*3+recv_pub_key_len+nonce_len,strlen(my_nonce_str)) != 0 ){
+  if( memcmp(my_nonce_str,(const char*)recv_data+sizeof(int)*3+recv_pub_key_len+nonce_len,my_nonce_len) != 0 ){
     fprintf(stderr,"INIT 3: nonce does not match the one that I sent.\n");
     return;
   }
@@ -461,7 +461,7 @@ void handle_init_4 (void *packet, unsigned int length ){
     return;
   }
   char * my_nonce_str = BN_bn2hex(&nonce);
-  if( memcmp(my_nonce_str,(const char*)recv_data+sizeof(int)*2+recv_pub_key_len,strlen(my_nonce_str)) != 0 ){
+  if( memcmp(my_nonce_str,(const char*)recv_data+sizeof(int)*2+recv_pub_key_len,nonce_len) != 0 ){
     fprintf(stderr,"INIT 4: nonce does not match the one that I sent.\n");
     return;
   }

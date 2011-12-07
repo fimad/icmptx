@@ -538,7 +538,6 @@ void handle_recv (void *packet, unsigned int length ){
 }
 
 unsigned char *construct_packet(aes_system *system, unsigned char *plaintext, int *len){
-  *len += 1;
   unsigned char *enc_data = aes_encrypt(system, plaintext, len);
   unsigned char *packet = (unsigned char*)malloc(sizeof(struct tunnel)+*len);
   if( !packet ){

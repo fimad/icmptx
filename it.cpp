@@ -167,7 +167,7 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       next_resend_packet(&data,&length);
 
       if( length > packetsize-sizeof(struct icmp) ){
-        perror("attempting to send a message that is TOO BIG");
+        fprintf(stderr,"attempting to send a message that is TOO BIG\n");
         return -1;
       }
       memcpy(packet+sizeof(struct icmp),data,length); //copy the data into the packet

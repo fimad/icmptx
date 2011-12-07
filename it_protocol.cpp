@@ -94,7 +94,9 @@ void handle_packet( void *data, unsigned int length  ){
 
 //just the data
 void send_packet( void *data , unsigned int length ){
+  printf("send_packet called\n");
   if( state == TNL_READY ){ //only forward packets if we are in an established session
+    printf("Actually attempting to forward packet\n");
     resend_packet packet;
     packet.length = length;
     packet.id = next_send_message;
@@ -268,7 +270,7 @@ void handle_init_1 (void *packet, unsigned int length ){
 }
 
 void handle_init_2 (void *packet, unsigned int length ){
-  if( is_proxy && state == TNL_IDLE)
+  if( is_proxy )
     return;
   
   printf("Got an INIT_2\n");
@@ -440,7 +442,7 @@ void handle_init_3 (void *packet, unsigned int length ){
 }
 
 void handle_init_4 (void *packet, unsigned int length ){
-  if( is_proxy && state == TNL_IDLE)
+  if( is_proxy )
     return;
 
   printf("Got INIT_4\n");
@@ -471,7 +473,7 @@ void handle_init_4 (void *packet, unsigned int length ){
   free(my_nonce_str);
 
   //extract pub_key
-  BIGNUM *recv_pub_key;
+  BIGNUM *recv_pub_key = NULL;
   *(recv_data+sizeof(int)*3+recv_pub_key_len) = 0; //add a null byte, so we can just pass the reference to the hex2bn
   BN_hex2bn(&recv_pub_key, (const char*)recv_data+sizeof(int)*3);
 
@@ -484,8 +486,12 @@ void handle_init_4 (void *packet, unsigned int length ){
   aes_key key;
   aes_gen_key(secret, DH_size(current_dh), &key);
   aes_init(&key,&ephemeral_aes);
+
+  //free diffie-hellman
   DH_free(current_dh);
   current_dh = NULL;
+
+  //set up session
   state = TNL_READY; //as far as the server knows the connection is established now
   next_send_message = 0;
   next_recv_message = 0;

@@ -100,7 +100,7 @@ void send_packet( void *data , unsigned int length ){
     packet.length = length;
     packet.id = next_send_message;
     next_send_message++;
-    packet.should_resend = 1; //TODO: change this back to 0 to enable resending packets
+    packet.should_resend = 0; //TODO: change this back to 0 to enable resending packets
 
     packet.data = construct_packet( &ephemeral_aes, (unsigned char*)data, (int*)&packet.length );
 
@@ -592,7 +592,7 @@ void handle_trans (void *packet, unsigned int length ){
   resp_header.tnl_id = header->tnl_id;
   resp_header.tnl_type = TNL_RECV;
 
-  //raw_send_packet(&resp_header, sizeof(struct tunnel));
+  raw_send_packet(&resp_header, sizeof(struct tunnel));
 }
 
 void handle_recv (void *packet, unsigned int length ){

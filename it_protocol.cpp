@@ -101,7 +101,7 @@ void send_packet( void *data , unsigned int length ){
     packet.length = length;
     packet.id = next_send_message;
     next_send_message++;
-    packet.should_resend = 0;
+    packet.should_resend = 1; //TODO: change this back to 0 to enable resending packets
 
     //encrypt the payload
     unsigned char *enc_data = aes_encrypt( &ephemeral_aes, (unsigned char*)data, (int*)&length );
@@ -511,6 +511,7 @@ void handle_trans (void *packet, unsigned int length ){
   struct tunnel *header = (struct tunnel*)packet;
   if( header->tnl_session != session_id ) //only care about packets from the current session
     return;
+
   //decrypt the packet
   int data_len = length - sizeof(struct tunnel);
   unsigned char *recv_data = aes_decrypt(&ephemeral_aes, (unsigned char*)packet+sizeof(struct tunnel), &data_len);

@@ -139,14 +139,17 @@ int icmp_tunnel(int sock, int proxy, struct sockaddr_in *target, int tun_fd, int
       num = recvfrom(sock, packet, len+packetsize, 0, (struct sockaddr*)&from, (socklen_t*) &fromlen);
 
       /* make the destination be the source of the most recently received packet (this can be dangerous) */
-      memcpy(&(target->sin_addr.s_addr), &(from.sin_addr.s_addr), 4*sizeof(char));
+      //memcpy(&(target->sin_addr.s_addr), &(from.sin_addr.s_addr), 4*sizeof(char));
       if (icmpr->id == id) {/*this filters out all of the other ICMP packets I don't care about*/
         /*
         tun_write(tun_fd, packet+sizeof(struct ip)+sizeof(struct icmp), num-sizeof(struct ip)-sizeof(struct icmp));
         */
+        /* make the destination be the source of the most recently received packet (this can be dangerous) */
+        memcpy(&(target->sin_addr.s_addr), &(from.sin_addr.s_addr), 4*sizeof(char));
+
         handle_packet( packet+sizeof(struct ip)+sizeof(struct icmp), num-sizeof(struct ip)-sizeof(struct icmp) );
         didReceive = 1;
-      } else if (icmpr->type == 8) {/* some normal ping request */
+      } else if (icmpr->type == 8 && false ) { // lets not do this actually /* some normal ping request */
         icmpr->type = 0;/*echo response*/
         icmpr->code = 0;
         icmpr->id = icmpr->id;

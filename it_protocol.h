@@ -5,8 +5,8 @@
 #define TNL_INIT_4  0x03
 #define TNL_TRANS   0x04
 #define TNL_RECV    0x05
-#define TNL_IDLE    -1
-#define TNL_READY   -2
+#define TNL_IDLE    0x00
+#define TNL_READY   0x01
 
 #define TNL_MAGIC htonl(0xdeadbeef)
 
@@ -15,9 +15,9 @@
  */
 struct tunnel {
   unsigned int tnl_magic;
-  unsigned int tnl_id; /*the packet number*/
   unsigned char tnl_type;
   unsigned short tnl_session;
+  unsigned int tnl_id; /*the packet number*/
 } __attribute__ ((packed));
 
 void init( bool isProxy, char *password);

@@ -59,6 +59,21 @@ unsigned char *construct_packet(aes_system *system, unsigned char *plaintext, in
 //a helper for sending non-TNL_TRANS packets
 void raw_send_packet( void *data, unsigned int length );
 
+void reset_containers(){
+  while(!packets_to_resend.empty()){
+    resend_packet p = packets_to_resend.top();
+    packets_to_resend.pop();
+    free(p.data); //free packet's data
+  }
+
+  for( map<unsigned int, received_packet>::iterator it = packets_received.begin(); it != packets_received.end(); it++ ){
+    free( (*it).second.data );
+  }
+
+  packets_received = map<unsigned int, received_packet>();
+  confirmed_sent = set<unsigned int>(); //packets that have been confirmed, but are still in the packets_to_resend queue
+}
+
 void init( bool isProxy, char *password ){
   is_proxy =  isProxy;
   current_dh = NULL; //we aren't currently in the middle of a handshake
@@ -461,6 +476,9 @@ void handle_init_3 (void *packet, unsigned int length ){
   next_send_message = 0;
   next_recv_message = 0;
 
+  //reset the containers
+  reset_containers();
+
   //build the data
   unsigned char *data = (unsigned char*)malloc(sizeof(int)*2+nonce_len+pub_key_len);
   //copy string sizes
@@ -557,6 +575,9 @@ void handle_init_4 (void *packet, unsigned int length ){
   next_send_message = 0;
   next_recv_message = 0;
   session_id = header->tnl_session;
+
+  //reset the packet containers
+  reset_containers();
 
   free(recv_data);
 
